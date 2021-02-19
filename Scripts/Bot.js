@@ -23,7 +23,7 @@ async function ratio(exchange){//calculates currency ratio
   else{
     var rratio = (totalBalance.DAI/(totalBalance.DAI + (totalBalance.USD * 0.9)));
 }
-return Math.abs(rratio);
+return rratio;
   }
 
 async function createLimitOrder(symbol, amount, price, side,){// create limit orders
@@ -50,7 +50,7 @@ async function Bot(exchange,symbol, amount){// Bot algorithm
 createLimitOrder(symbol, amount, bid + 0.0001, 'Buy');
 createLimitOrder(symbol, amount, ask - 0.0001, 'Sell');
 setTimeout(() => {
-    exchange.cancelOrder(buyOrders); 
+    exchange.cancelOrder(buyOrder); 
     exchange.cancelOrder(sellOrder); 
     Bot(exchange , symbol, 10);
     }, 300000); 
