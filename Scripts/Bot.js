@@ -15,59 +15,55 @@ exchange.walletAddress = '0xAAAD27c5C7c15a97AEe626c476D0a6633c1901F4';
 exchange.token = 'DAI/USD';
 //Config end
 
-async function Leerage(exchange){//calculates leverage
-    let tBalance = await exchange.fetchTotalBalance();
-    if(tBalance.USD < tBalance.DAI){
-   let leverage = (tBalance.USD/(tBalance.USD + (tBalance.DAI * 0.9)));
-return leverage
+async function ratio(exchange){//calculates currency ratio
+    var totalBalance = await exchange.fetchTotalBalance();
+    if(totalBalance.USD < totalBalance.DAI){
+   var rratio = (totalBalance.USD/(totalBalance.USD + (totalBalance.DAI * 0.9)));
  }
   else{
-    let tBalance = await exchange.fetchTotalBalance();
-    let Leverage = (tBalance.DAI/(tBalance.DAI + (tBalance.USD * 0.9)));
-    return Leverage;
+    var rratio = (totalBalance.DAI/(totalBalance.DAI + (totalBalance.USD * 0.9)));
 }
-
+return Math.abs(rratio);
   }
 
 async function createLimitOrder(symbol, amount, price, side,){// create limit orders
     if(side === 'Buy'){
-       let bOrder = await exchange.createLimitBuyOrder(symbol,amount,price,);
+       var buyOrder = await exchange.createLimitBuyOrder(symbol,amount,price,);
         console.log(`You created a limit ${side} order with the pair ${symbol}`);
-        console.log(bOrder.id);
-    }
+        }
     else{
-        console.log(await exchange.createLimitSellOrder(symbol,amount,price,));
+       var sellOrder = await exchange.createLimitSellOrder(symbol,amount,price);
         console.log(`You created a limit ${side} order with the pair ${symbol}`);
     }
+    return side === 'Buy' ? buyOrder : sellOrder;
 }
 
 async function Bot(exchange,symbol, amount){// Bot algorithm
-    let orderbook = await exchange.fetchOrderBook(symbol);
-    let takerFees = exchange.markets[symbol].taker;
-    let makerFees = exchange.markets[symbol].maker;
-   let Leverage = await Leerage(exchange);
-    let bid = orderbook.bids.length ? orderbook.bids[0][0] : undefined;
-    let ask = orderbook.asks.length ? orderbook.asks[0][0] : undefined;
-    let spread = ask - bid;
-    let commission = makerFees + takerFees;
-    console.log(commission);
-    while(commission < spread && Leverage <= 4){
+    var orderbook = await exchange.fetchOrderBook(symbol);
+    var makerFees = exchange.markets[symbol].maker;
+   var rRatio = await ratio(exchange);
+    var bid = orderbook.bids.length ? orderbook.bids[0][0] : undefined;
+    var ask = orderbook.asks.length ? orderbook.asks[0][0] : undefined;
+    var spread = ask - bid;
+    var commission = makerFees * 2;
+    while(commission < spread && rRatio <= 4){
 createLimitOrder(symbol, amount, bid + 0.0001, 'Buy');
 createLimitOrder(symbol, amount, ask - 0.0001, 'Sell');
 setTimeout(() => {
-    exchange.cancelOrder(bOrder); 
-    exchange.cancelOrder(sOrder); 
+    exchange.cancelOrder(buyOrders); 
+    exchange.cancelOrder(sellOrder); 
     Bot(exchange , symbol, 10);
     }, 300000); 
         }
 console.log('Leverage is too high or the commission is larger than the spread.')
 //initiate on event return;
+return;
 }
 
      
     
      //initiation
-     
-  
      Bot(exchange , exchange.token , 10);
+  
+
    
